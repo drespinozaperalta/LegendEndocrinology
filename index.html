@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Legend of Endocrinology: A Link to the Past</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Retro Pixel Art -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Press Start 2P', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Estilos Retro Pixel Art */
+        .pixel-corners {
+            box-shadow: 
+                -4px 0 0 0 #f59e0b,
+                4px 0 0 0 #f59e0b,
+                0 -4px 0 0 #f59e0b,
+                0 4px 0 0 #f59e0b,
+                -8px 0 0 0 #78350f,
+                8px 0 0 0 #78350f,
+                0 -8px 0 0 #78350f,
+                0 8px 0 0 #78350f;
+        }
+
+        .pixel-box {
+            background-color: #090d16;
+            border: 4px solid #f59e0b;
+            box-shadow: inset 0 0 0 4px #78350f, 0 10px 25px rgba(0,0,0,0.85);
+        }
+
+        .btn-retro {
+            background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+            border: 3px solid #fbbf24;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 0 #78350f;
+            transition: all 0.05s ease;
+        }
+
+        .btn-retro:hover {
+            background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+            border-color: #fef08a;
+            transform: translateY(-1px);
+        }
+
+        .btn-retro:active {
+            transform: translateY(3px);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 0 #78350f;
+        }
+
+        /* Efecto CRT Scanlines */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 40;
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { filter: drop-shadow(0 0 8px #fbbf24); }
+            50% { filter: drop-shadow(0 0 22px #f59e0b); }
+        }
+
+        .gold-glow {
+            animation: pulse-gold 2s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-4px, 0px) rotate(1deg); }
+            40% { transform: translate(2px, -2px) rotate(-1deg); }
+            60% { transform: translate(-2px, 3px) rotate(0deg); }
+            80% { transform: translate(3px, 1px) rotate(1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex flex-col justify-center items-center p-2 md:p-4 crt relative overflow-x-hidden">
+
+    <!-- Game Container -->
+    <div id="game-container" class="w-full max-w-4xl bg-black rounded-xl overflow-hidden border-4 border-yellow-600 shadow-2xl relative flex flex-col my-auto" style="min-height: 640px;">
+
+        <!-- Top Retro HUD -->
+        <header class="bg-gray-900 border-b-4 border-amber-600 p-3 flex flex-wrap justify-between items-center z-30">
+            <!-- Corazones / HP -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xs text-amber-400 mr-1 hidden sm:inline">VIDA:</span>
+                <div id="hearts-container" class="flex space-x-1"></div>
+            </div>
+
+            <!-- Título Principal -->
+            <div class="text-center hidden md:block">
+                <h1 class="text-xs text-amber-400 tracking-wider">THE LEGEND OF ENDOCRINOLOGY</h1>
+                <p class="text-[8px] text-amber-200">A LINK TO THE PAST</p>
+            </div>
+
+            <!-- Contador de Rupias -->
+            <div class="flex items-center space-x-2 bg-black px-3 py-1.5 rounded border border-emerald-500">
+                <svg class="w-4 h-6 text-emerald-400 fill-current" viewBox="0 0 24 24">
+                    <polygon points="12,2 22,8 22,16 12,22 2,16 2,8" />
+                </svg>
+                <span id="rupee-count" class="text-sm md:text-base text-emerald-400">8000</span>
+            </div>
+        </header>
+
+        <!-- Pantalla de Juego Escenario -->
+        <main id="screen-viewport" class="relative flex-1 flex flex-col justify-between p-4 md:p-6 bg-cover bg-center min-h-[480px] transition-all duration-700" style="background-color: #064e3b;">
+            
+            <div id="bg-overlay" class="absolute inset-0 opacity-40 bg-gradient-to-b from-transparent to-black pointer-events-none"></div>
+
+            <!-- Zona Visual Escénica Interactiva -->
+            <div id="visual-stage" class="relative z-10 flex flex-col items-center justify-center min-h-[220px] my-auto"></div>
+
+            <!-- Caja de Diálogo y Menú de Opciones -->
+            <div class="relative z-20 w-full mt-4">
+                <div class="pixel-box p-4 md:p-5 rounded-lg text-amber-100 flex flex-col justify-between min-h-[160px]">
+                    
+                    <!-- Avatar del Personaje e Historia -->
+                    <div class="flex items-start space-x-3 md:space-x-4 mb-3">
+                        <div id="dialogue-avatar" class="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 bg-amber-900 border-2 border-amber-400 rounded flex items-center justify-center overflow-hidden"></div>
+                        <div class="flex-1">
+                            <h3 id="dialogue-speaker" class="text-xs text-amber-400 mb-1">HÉROE</h3>
+                            <p id="dialogue-text" class="text-xs md:text-sm leading-relaxed text-amber-100">
+                                Cargando aventura...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Opciones -->
+                    <div id="choices-container" class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Pie de página EndoMemes -->
+        <footer class="bg-gray-900 border-t-2 border-amber-700 px-4 py-2 text-[9px] text-gray-400 flex justify-between items-center z-30">
+            <span>Inspirado en EndoMemes®</span>
+            <span id="scene-indicator">FASE: 1/5</span>
+        </footer>
+    </div>
+
+    <!-- JavaScript del Motor de Juego -->
+    <script>
+        const gameState = {
+            hp: 4,
+            maxHp: 4,
+            rupees: 8000,
+            pendants: {
+                fisiologia: false,
+                farmacologia: false,
+                evidencia: false
+            },
+            currentScene: 'INTRO',
+            bossHp: 100
+        };
+
+        const DOM = {
+            heartsContainer: document.getElementById('hearts-container'),
+            rupeeCount: document.getElementById('rupee-count'),
+            viewport: document.getElementById('screen-viewport'),
+            visualStage: document.getElementById('visual-stage'),
+            speaker: document.getElementById('dialogue-speaker'),
+            text: document.getElementById('dialogue-text'),
+            avatar: document.getElementById('dialogue-avatar'),
+            choices: document.getElementById('choices-container'),
+            sceneIndicator: document.getElementById('scene-indicator')
+        };
+
+        function renderHUD() {
+            DOM.heartsContainer.innerHTML = '';
+            for (let i = 0; i < gameState.maxHp; i++) {
+                const heart = document.createElement('span');
+                heart.className = 'text-red-500 text-sm md:text-base';
+                heart.innerHTML = i < gameState.hp ? '❤️' : '🖤';
+                DOM.heartsContainer.appendChild(heart);
+            }
+            DOM.rupeeCount.textContent = gameState.rupees;
+        }
+
+        function triggerShake() {
+            DOM.viewport.classList.add('shake');
+            setTimeout(() => DOM.viewport.classList.remove('shake'), 400);
+        }
+
+        const SCENES = {
+            INTRO: {
+                title: "1/5: El Portal de las Redes Sociales",
+                bg: "linear-gradient(90deg, #064e3b 50%, #4c1d95 50%)",
+                speaker: "SABIO ENDOCRINO",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#312e81"/><circle cx="16" cy="12" r="6" fill="#fde047"/><rect x="8" y="18" width="16" height="14" rx="4" fill="#6366f1"/><path d="M10 14 L22 14 L16 26 Z" fill="#ffffff" opacity="0.8"/></svg>`,
+                text: "Cuando cruzas el portal de Instagram y TikTok descubres cómo practican endocrinología los influencers... ¿Deseas cruzar al Mundo Oscuro?",
+                visual: () => `
+                    <div class="flex flex-wrap items-center justify-center gap-4 w-full max-w-xl px-2">
+                        <div class="text-center p-3 bg-emerald-950/90 rounded border-2 border-emerald-400 max-w-[200px]">
+                            <span class="text-xs text-emerald-300 font-bold block mb-1">Mundo de la Luz</span>
+                            <p class="text-[8px] text-emerald-200 leading-relaxed">
+                                ✅ Medicina basada en evidencia<br>
+                                ✅ Guías clínicas<br>
+                                ✅ Ensayos aleatorizados
+                            </p>
+                        </div>
+                        <div class="w-14 h-20 bg-purple-600 rounded-full border-4 border-yellow-300 gold-glow flex items-center justify-center text-2xl">
+                            🌀
+                        </div>
+                        <div class="text-center p-3 bg-purple-950/90 rounded border-2 border-purple-400 max-w-[200px]">
+                            <span class="text-xs text-purple-300 font-bold block mb-1">Mundo Oscuro</span>
+                            <p class="text-[8px] text-purple-200 leading-relaxed">
+                                ❌ Fatiga adrenal<br>
+                                ❌ Detox hormonal<br>
+                                ❌ T3 reversa para todo<br>
+                                ❌ Cortisol salival
+                            </p>
+                        </div>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "▶ Sí (solo por curiosidad...)",
+                        action: () => loadScene('MUNDO_OSCURO')
+                    },
+                    {
+                        text: "▶ No (mejor sigo con las guías)",
+                        action: () => loadScene('TEMPLE_PREP')
+                    }
+                ]
+            },
+
+            MUNDO_OSCURO: {
+                title: "1/5: El Mundo Oscuro de TikTok",
+                bg: "#3b0764",
+                speaker: "INFLUENCER DEL MUNDO OSCURO",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#581c87"/><circle cx="16" cy="12" r="6" fill="#f43f5e"/><rect x="6" y="8" width="20" height="4" fill="#000"/><path d="M8 20 Q16 26 24 20" stroke="#fff" stroke-width="2" fill="none"/></svg>`,
+                text: "¡Has entrado al Mundo Oscuro! Aquí afirman que la insulina es tóxica, la levotiroxina no sirve y todos necesitan testosterona o suplementos milagro.",
+                visual: () => `
+                    <div class="grid grid-cols-2 gap-2 max-w-md w-full">
+                        <div class="p-2 bg-purple-900 border border-purple-400 rounded text-center text-[9px] text-purple-200">❌ La insulina es tóxica</div>
+                        <div class="p-2 bg-purple-900 border border-purple-400 rounded text-center text-[9px] text-purple-200">❌ Todos tienen resistencia</div>
+                        <div class="p-2 bg-purple-900 border border-purple-400 rounded text-center text-[9px] text-purple-200">❌ Levotiroxina no sirve</div>
+                        <div class="p-2 bg-purple-900 border border-purple-400 rounded text-center text-[9px] text-purple-200">❌ Suplementos curan todo</div>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "🛡️ Activar Escudo de la Evidencia y regresar",
+                        action: () => {
+                            triggerShake();
+                            alertModal("¡PURIFICADO!", "Usaste el Escudo de la Evidencia para repeler la desinformación y regresar al camino clínico.", () => loadScene('TEMPLE_PREP'));
+                        }
+                    },
+                    {
+                        text: "🧪 Probar 'Detox Hormonal' (-1 Corazón)",
+                        action: () => {
+                            gameState.hp = Math.max(1, gameState.hp - 1);
+                            renderHUD();
+                            triggerShake();
+                            DOM.text.textContent = "¡Caíste en un mito sin evidencia! Pierdes 1 corazón por mala praxis del influencer.";
+                        }
+                    }
+                ]
+            },
+
+            TEMPLE_PREP: {
+                title: "2/5: La Espada Maestra y los 3 Colgantes",
+                bg: "#065f46",
+                speaker: "ESPADA MAESTRA DEL JUICIO CLÍNICO",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#064e3b"/><path d="M16 4 L20 14 L16 28 L12 14 Z" fill="#93c5fd"/><rect x="10" y="14" width="12" height="3" fill="#f59e0b"/></svg>`,
+                text: "No basta con tener cédula profesional para empuñarla... La verdadera espada maestra requiere de JUICIO CLÍNICO. Reúne los 3 colgantes indispensables.",
+                visual: () => {
+                    const p = gameState.pendants;
+                    return `
+                        <div class="flex flex-col items-center">
+                            <div class="w-14 h-24 mb-3 flex items-center justify-center">
+                                <div class="px-3 py-4 bg-blue-400 border-4 border-yellow-400 rounded ${p.fisiologia && p.farmacologia && p.evidencia ? 'gold-glow' : 'opacity-40'}">
+                                    🗡️
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 w-full max-w-sm">
+                                <div class="p-2 rounded text-center border text-[9px] ${p.fisiologia ? 'bg-red-900 border-red-400 text-red-200' : 'bg-gray-800 text-gray-500 border-gray-700'}">
+                                    🔴 Fisiología
+                                </div>
+                                <div class="p-2 rounded text-center border text-[9px] ${p.farmacologia ? 'bg-blue-900 border-blue-400 text-blue-200' : 'bg-gray-800 text-gray-500 border-gray-700'}">
+                                    🔵 Farmacología
+                                </div>
+                                <div class="p-2 rounded text-center border text-[9px] ${p.evidencia ? 'bg-emerald-900 border-emerald-400 text-emerald-200' : 'bg-gray-800 text-gray-500 border-gray-700'}">
+                                    🟢 Evidencia
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                },
+                choices: [
+                    {
+                        text: "🔴 Desafío 1: Colgante de Fisiología",
+                        action: () => loadScene('PUZZLE_FISIO')
+                    },
+                    {
+                        text: "🔵 Desafío 2: Colgante de Farmacología",
+                        action: () => loadScene('PUZZLE_FARMA')
+                    },
+                    {
+                        text: "🟢 Desafío 3: Colgante de Evidencia",
+                        action: () => loadScene('PUZZLE_EVIDENCIA')
+                    },
+                    {
+                        text: "📦 Explorar el Cofre del Tesoro",
+                        action: () => loadScene('CHEST_TRAP')
+                    }
+                ]
+            },
+
+            PUZZLE_FISIO: {
+                title: "2/5: Colgante de Fisiología",
+                bg: "#7f1d1d",
+                speaker: "GUARDIÁN DE LA FISIOLOGÍA",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#991b1b"/><circle cx="16" cy="16" r="10" fill="#ef4444"/><path d="M12 16 Q16 8 20 16 Q16 24 12 16" fill="#fff"/></svg>`,
+                text: "Pregunta Fisiológica: ¿Cómo responde la hipófisis ante la falla tiroidea primaria en el asa de retroalimentación negativa?",
+                visual: () => `<div class="text-4xl text-center">🧠 ↔️ 🦋</div>`,
+                choices: [
+                    {
+                        text: "▶ Aumenta TSH al disminuir T4L por retroalimentación",
+                        action: () => {
+                            gameState.pendants.fisiologia = true;
+                            alertModal("¡CORRECTO!", "Dominaste el eje hormonal. ¡Obtienes el Colgante Rojo de Fisiología!", () => loadScene('TEMPLE_CHECK'));
+                        }
+                    },
+                    {
+                        text: "▶ Indicar T3 Reversa a todos los pacientes",
+                        action: () => {
+                            triggerShake();
+                            gameState.hp = Math.max(1, gameState.hp - 1);
+                            renderHUD();
+                            alertModal("¡ERROR!", "Respuesta pseudocientífica. Pierdes 1 corazón.");
+                        }
+                    }
+                ]
+            },
+
+            PUZZLE_FARMA: {
+                title: "2/5: Colgante de Farmacología",
+                bg: "#1e3a8a",
+                speaker: "GUARDIÁN DE LA FARMACOLOGÍA",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#1e40af"/><circle cx="16" cy="16" r="10" fill="#3b82f6"/><rect x="10" y="14" width="12" height="4" fill="#fff"/></svg>`,
+                text: "1992 vs 2026: Han pasado más de 30 años desde la época SNES. ¿Cuál es el tratamiento moderno preferido para la Diabetes Tipo 2 con protección cardiovascular?",
+                visual: () => `
+                    <div class="flex justify-between items-center w-full max-w-sm text-center">
+                        <div class="p-2 bg-gray-900 border border-gray-600 rounded text-[8px]">
+                            1992: Solo Glibenclamida
+                        </div>
+                        <span class="text-xl">➔</span>
+                        <div class="p-2 bg-blue-950 border border-blue-400 rounded text-[8px] text-blue-200">
+                            2026: GLP-1 / iSGLT2 / Agonistas Duales
+                        </div>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "▶ iSGLT2, GLP-1 y Agonistas Duales/Triples",
+                        action: () => {
+                            gameState.pendants.farmacologia = true;
+                            alertModal("¡EXCELENTE!", "Conoces las terapias modernas. ¡Obtienes el Colgante Azul de Farmacología!", () => loadScene('TEMPLE_CHECK'));
+                        }
+                    },
+                    {
+                        text: "▶ Seguir tratando todo únicamente con Glibenclamida",
+                        action: () => {
+                            triggerShake();
+                            alertModal("¡ERROR!", "Te quedaste atrapado en 1992. Intenta nuevamente.");
+                        }
+                    }
+                ]
+            },
+
+            PUZZLE_EVIDENCIA: {
+                title: "2/5: Colgante de Evidencia",
+                bg: "#064e3b",
+                speaker: "GUARDIÁN DE LA EVIDENCIA",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#047857"/><path d="M8 8 L24 8 L24 24 L8 24 Z" fill="#10b981"/><path d="M12 14 L16 18 L20 12" stroke="#fff" stroke-width="2" fill="none"/></svg>`,
+                text: "¿En qué te basas para tomar decisiones diagnósticas y terapéuticas de calidad?",
+                visual: () => `<div class="text-4xl text-center">📊 📑 🔬</div>`,
+                choices: [
+                    {
+                        text: "▶ Medicina Basada en Evidencia y Guías Clínicas",
+                        action: () => {
+                            gameState.pendants.evidencia = true;
+                            alertModal("¡CORRECTO!", "¡Obtienes el Colgante Verde de Medicina Basada en Evidencia!", () => loadScene('TEMPLE_CHECK'));
+                        }
+                    },
+                    {
+                        text: "▶ Testimonios de influencers de TikTok",
+                        action: () => {
+                            triggerShake();
+                            alertModal("¡ERROR!", "Los testimonios sin rigor no son evidencia científica.");
+                        }
+                    }
+                ]
+            },
+
+            CHEST_TRAP: {
+                title: "3/5: La Trampa del Cofre Falso",
+                bg: "#312e81",
+                speaker: "COFRE TRAMPA",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#1e1b4b"/><rect x="6" y="10" width="20" height="14" fill="#d97706"/><circle cx="16" cy="17" r="2" fill="#fff"/></svg>`,
+                text: "¡Abriste el cofre sin usar filtro de juicio clínico!",
+                visual: () => `
+                    <div class="text-center p-4 bg-amber-950 border-4 border-yellow-500 rounded text-amber-200 max-w-sm gold-glow">
+                        <div class="text-3xl mb-1">📜 📉</div>
+                        <h4 class="text-xs text-yellow-400 mb-2 font-bold">¡PERFIL HORMONAL DE 37 ANALITOS!</h4>
+                        <p class="text-[9px] text-red-300">¡Encontraste un estudio que nadie sabe interpretar! Perdiste 8,000 rupias.</p>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "💸 Aceptar pérdida y regresar con Juicio Clínico",
+                        action: () => {
+                            triggerShake();
+                            gameState.rupees = 0;
+                            renderHUD();
+                            loadScene('TEMPLE_PREP');
+                        }
+                    }
+                ]
+            },
+
+            BOSS_BATTLE: {
+                title: "4/5: Jefe Final: El Ambiente Obesogénico",
+                bg: "#450a0a",
+                speaker: "JEFE FINAL",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#7f1d1d"/><circle cx="16" cy="16" r="12" fill="#991b1b"/><circle cx="12" cy="12" r="3" fill="#fde047"/><circle cx="20" cy="12" r="3" fill="#fde047"/><path d="M10 22 Q16 16 22 22" stroke="#000" stroke-width="3" fill="none"/></svg>`,
+                text: "¡Soy El Ambiente Obesogénico! Te ataco con Ultraprocesados, Privación de sueño, Publicidad engañosa y Sedentarismo estructural.",
+                visual: () => `
+                    <div class="w-full max-w-md flex flex-col items-center">
+                        <div class="w-full bg-gray-900 border-2 border-red-500 rounded h-5 mb-3 overflow-hidden">
+                            <div id="boss-hp-fill" class="bg-gradient-to-r from-red-600 to-orange-500 h-full transition-all duration-500" style="width: ${gameState.bossHp}%;"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 w-full text-center mb-2 text-[8px]">
+                            <div class="p-1.5 bg-red-950 border border-red-600 rounded text-red-200">🍟 Ultraprocesados</div>
+                            <div class="p-1.5 bg-red-950 border border-red-600 rounded text-red-200">💤 Privación de sueño</div>
+                            <div class="p-1.5 bg-red-950 border border-red-600 rounded text-red-200">📢 Publicidad engañosa</div>
+                            <div class="p-1.5 bg-red-950 border border-red-600 rounded text-red-200">🛋️ Sedentarismo</div>
+                        </div>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "⚔️ Atacar solo con 'Fuerza de voluntad'",
+                        action: () => {
+                            triggerShake();
+                            DOM.text.textContent = "¡Ataque fallido! (0 de daño). Y todavía hay quien cree que basta con tener 'fuerza de voluntad'...";
+                        }
+                    },
+                    {
+                        text: "🛡️ Estilo de vida + Fármaco MBE + Apoyo Multidisciplinario",
+                        action: () => {
+                            gameState.bossHp -= 50;
+                            const fill = document.getElementById('boss-hp-fill');
+                            if(fill) fill.style.width = `${gameState.bossHp}%`;
+                            
+                            if (gameState.bossHp <= 0) {
+                                alertModal("¡VICTORIA CIENTÍFICA!", "Derrotaste al Ambiente Obesogénico con un abordaje multidisciplinario y paciencia a largo plazo.", () => loadScene('TRIFORCE_VICTORY'));
+                            } else {
+                                triggerShake();
+                                DOM.text.textContent = "¡GOLPE CRÍTICO! Daño masivo. Mantén el tratamiento multidisciplinario para vencerlo.";
+                            }
+                        }
+                    }
+                ]
+            },
+
+            TRIFORCE_VICTORY: {
+                title: "5/5: La Trifuerza Endocrina",
+                bg: "#78350f",
+                speaker: "LA TRIFUERZA ENDOCRINA",
+                avatar: `<svg viewBox="0 0 32 32" class="w-full h-full"><rect width="32" height="32" fill="#451a03"/><polygon points="16,4 28,26 4,26" fill="#fbbf24"/></svg>`,
+                text: "¡Solo quien domina las tres puede restaurar el equilibrio hormonal!",
+                visual: () => `
+                    <div class="flex flex-col items-center gold-glow">
+                        <div class="w-32 h-28 relative flex flex-col items-center justify-center">
+                            <svg viewBox="0 0 100 90" class="w-full h-full">
+                                <polygon points="50,5 25,50 75,50" fill="#f59e0b" stroke="#fef08a" stroke-width="2"/>
+                                <polygon points="25,50 0,95 50,95" fill="#d97706" stroke="#fef08a" stroke-width="2"/>
+                                <polygon points="75,50 50,95 100,95" fill="#b45309" stroke="#fef08a" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="mt-2 text-center text-[9px] text-amber-200 space-y-1.5 bg-black/90 p-3 rounded border border-amber-400 max-w-md">
+                            <p>💪 <strong>Poder:</strong> Insulina oportuna</p>
+                            <p>🧠 <strong>Sabiduría:</strong> Retroalimentación negativa</p>
+                            <p>🛡️ <strong>Valor:</strong> Suspender suplementos innecesarios</p>
+                        </div>
+                    </div>
+                `,
+                choices: [
+                    {
+                        text: "🔄 VOLVER A JUGAR",
+                        action: () => {
+                            gameState.hp = 4;
+                            gameState.rupees = 8000;
+                            gameState.pendants = { fisiologia: false, farmacologia: false, evidencia: false };
+                            gameState.bossHp = 100;
+                            renderHUD();
+                            loadScene('INTRO');
+                        }
+                    }
+                ]
+            }
+        };
+
+        function checkTempleCompletion() {
+            const p = gameState.pendants;
+            if (p.fisiologia && p.farmacologia && p.evidencia) {
+                alertModal("¡FORJASTE LA ESPADA MAESTRA!", "Conseguiste los 3 Colgantes Indispensables. Estás listo para luchar contra el Jefe Final.", () => loadScene('BOSS_BATTLE'));
+            } else {
+                loadScene('TEMPLE_PREP');
+            }
+        }
+        SCENES['TEMPLE_CHECK'] = { action: checkTempleCompletion };
+
+        function loadScene(sceneKey) {
+            if (sceneKey === 'TEMPLE_CHECK') {
+                checkTempleCompletion();
+                return;
+            }
+
+            const scene = SCENES[sceneKey];
+            if (!scene) return;
+
+            gameState.currentScene = sceneKey;
+            
+            DOM.viewport.style.background = scene.bg;
+            DOM.speaker.textContent = scene.speaker;
+            DOM.text.textContent = scene.text;
+            DOM.avatar.innerHTML = scene.avatar;
+            DOM.visualStage.innerHTML = scene.visual();
+            DOM.sceneIndicator.textContent = `FASE: ${scene.title}`;
+
+            DOM.choices.innerHTML = '';
+            scene.choices.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-retro text-[10px] md:text-xs text-amber-200 p-2.5 rounded text-left leading-relaxed flex items-center justify-start space-x-2';
+                btn.innerHTML = `<span>${c.text}</span>`;
+                btn.onclick = c.action;
+                DOM.choices.appendChild(btn);
+            });
+        }
+
+        function alertModal(title, message, callback) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 crt';
+            
+            backdrop.innerHTML = `
+                <div class="pixel-box p-6 max-w-sm w-full text-center rounded-lg space-y-4">
+                    <h3 class="text-sm text-yellow-400 font-bold">${title}</h3>
+                    <p class="text-xs text-amber-100 leading-relaxed">${message}</p>
+                    <button id="modal-btn" class="btn-retro px-4 py-2 text-xs text-amber-300 rounded w-full">ACEPTAR</button>
+                </div>
+            `;
+            
+            document.body.appendChild(backdrop);
+            document.getElementById('modal-btn').onclick = () => {
+                document.body.removeChild(backdrop);
+                if (callback) callback();
+            };
+        }
+
+        window.onload = function() {
+            renderHUD();
+            loadScene('INTRO');
+        };
+    </script>
+</body>
+</html>
